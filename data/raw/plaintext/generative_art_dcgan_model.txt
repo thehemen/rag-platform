@@ -1,0 +1,198 @@
+Generative Art of Pixelated Characters: Usage of DCGAN Model
+Vladimir Zhuravlev
+Vladimir Zhuravlev
+
+Follow
+6 min read
+·
+Oct 29, 2024
+
+
+
+This work is the continuation of my pet project “Pixelated Morphing”. If you want to get acquainted with the procedural generation, please, read my article Generative Art of Pixelated Characters: Tips and Practices.
+
+I’ve implemented a DCGAN model to generate images. It is written in Python, with the PyTorch framework.
+
+Model Description
+A generative adversarial network is a deep learning model that captures the training data distribution to generate new data from that same distribution. It consists of two models, a generator and a discriminator. The job of the generator is to create fake images that look like the real ones. The job of the discriminator is to distunguish between a real image from the training dataset and a fake image from the generator. The target of learning is that the generator generates fakes that look as they are taken from the training data, and the discriminator makes an assumption that the generator output is real or fake at 50% confidence.
+
+So, a DCGAN model stands for the Deep Convolutional Generative Adversarial Network. It extends a plain GAN by using convolutional and convolutional-transpose layers.
+
+The images have shape of (4, 64, 64).
+
+Generator layers are provided here.
+
+Generator.
+===============================================================
+Layer (type:depth-idx) Output Shape Param #
+===============================================================
+Generator [64, 4, 64, 64] —
+├─Sequential: 1–1 [64, 4, 64, 64] —
+│ └─ConvTranspose2d: 2–1 [64, 512, 4, 4] 2,457,600
+│ └─BatchNorm2d: 2–2 [64, 512, 4, 4] 1,024
+│ └─LeakyReLU: 2–3 [64, 512, 4, 4] —
+│ └─ConvTranspose2d: 2–4 [64, 256, 8, 8] 2,097,152
+│ └─BatchNorm2d: 2–5 [64, 256, 8, 8] 512
+│ └─LeakyReLU: 2–6 [64, 256, 8, 8] —
+│ └─ConvTranspose2d: 2–7 [64, 128, 16, 16] 524,288
+│ └─BatchNorm2d: 2–8 [64, 128, 16, 16] 256
+│ └─LeakyReLU: 2–9 [64, 128, 16, 16] —
+│ └─ConvTranspose2d: 2–10 [64, 64, 32, 32] 131,072
+│ └─BatchNorm2d: 2–11 [64, 64, 32, 32] 128
+│ └─LeakyReLU: 2–12 [64, 64, 32, 32] —
+│ └─ConvTranspose2d: 2–13 [64, 4, 64, 64] 4,096
+│ └─Tanh: 2–14 [64, 4, 64, 64] —
+===============================================================
+Total params: 5,216,128
+Trainable params: 5,216,128
+Non-trainable params: 0
+Total mult-adds (Units.GIGABYTES): 29.36
+===============================================================
+Input size (MB): 0.08
+Forward/backward pass size (MB): 134.22
+Params size (MB): 20.86
+Estimated Total Size (MB): 155.16
+===============================================================
+
+Discriminator layers are provided as well.
+
+Discriminator.
+===============================================================
+Layer (type:depth-idx) Output Shape Param #
+===============================================================
+Discriminator [64, 1, 1, 1] —
+├─Sequential: 1–1 [64, 1, 1, 1] —
+│ └─Conv2d: 2–1 [64, 64, 32, 32] 4,096
+│ └─LeakyReLU: 2–2 [64, 64, 32, 32] —
+│ └─Conv2d: 2–3 [64, 128, 16, 16] 131,072
+│ └─BatchNorm2d: 2–4 [64, 128, 16, 16] 256
+│ └─LeakyReLU: 2–5 [64, 128, 16, 16] —
+│ └─Conv2d: 2–6 [64, 256, 8, 8] 524,288
+│ └─BatchNorm2d: 2–7 [64, 256, 8, 8] 512
+│ └─LeakyReLU: 2–8 [64, 256, 8, 8] —
+│ └─Conv2d: 2–9 [64, 512, 4, 4] 2,097,152
+│ └─BatchNorm2d: 2–10 [64, 512, 4, 4] 1,024
+│ └─LeakyReLU: 2–11 [64, 512, 4, 4] —
+│ └─Conv2d: 2–12 [64, 1, 1, 1] 8,192
+│ └─Sigmoid: 2–13 [64, 1, 1, 1] —
+===============================================================
+Total params: 2,766,592
+Trainable params: 2,766,592
+Non-trainable params: 0
+Total mult-adds (Units.GIGABYTES): 6.71
+===============================================================
+Input size (MB): 4.19
+Forward/backward pass size (MB): 92.28
+Params size (MB): 11.07
+Estimated Total Size (MB): 107.54
+===============================================================
+
+Now, it’s time to describe the training pipeline.
+
+Training Process
+The training process consists of three steps.
+
+Firstly, the discriminator is trained by real images with real labels.
+
+Secondly, the generator outputs fake images and the discriminator learns them with fake labels.
+
+Finally, the discriminator outputs an estimation of fake images and the generator is trained as they are real ones.
+
+The training of GANs is usually a challenging task. To make it stable, some tricks are used.
+
+The first hint is to add some noise to labels, so fake labels are belong to 0.0–0.1 range and real labels are in the 0.9–1.0 range.
+
+The second one is to use fake images not only from the same epoch but also from the previous ones, with a window of, say, one hundred epochs.
+
+And the last one is Exponential Moving Average (EMA) that implements training the model with exponentially smoothed decay.
+
+The model is trained on the Nvidia RTX A6000 48 GB from the vast.ai service.
+
+Training parameters:
+
+number of images: 10000,
+seed: 42,
+batch size: 64,
+number of epochs: 1000,
+number of the model checkpoints: 10,
+number of the image checkpoints: 100,
+number of image history epochs: 50,
+probability of image change: 0.5,
+max value of noise added to labels: 0.1,
+number of parallel workers: 16.
+The optimizer is Adam. Learning rates are not the same as they’re changed after the half of the training process:
+
+generator learning rate at start: 0.0003,
+generator learning rate at finish: 0.0002,
+discriminator learning rate at start: 0.0001,
+discriminator learning rate at finish: 0.0002.
+The loss function is the Binary Cross Entropy between the input and the target probabilities. The Generator and Discriminator Loss Values are provided here.
+
+Press enter or click to view image in full size
+Generator and Discriminator Loss Values
+Generator and Discriminator Loss Values
+As it can be seen, the loss values have peaks at the beginning of the training and then slowers down to the 2.9 generator loss the 0.75 discriminator loss. It proves that the model convergence is enough good.
+
+Model Inference
+The dataset consists of small transparent images generated by the morphing algorithm.
+
+Get Vladimir Zhuravlev’s stories in your inbox
+Join Medium for free to get updates from this writer.
+
+Enter your email
+Subscribe
+
+Remember me for faster sign in
+
+A batch of real images is provided here.
+
+
+Image Example
+How it works, you can see at these pictures.
+
+
+
+
+
+SmileCharacter to StrongCharacter Morphing Process
+The training process is challenging enough so it takes some time to get well looking images.
+
+The history of DCGAN output images is available here.
+
+
+Images at the beginning of the training process
+
+Images for 200 epochs
+
+Images for 400 epochs
+
+Images for 600 epochs
+
+Images for 800 epochs
+
+Images for 1000 epochs
+So, the images are not ideal but some of them look nicely.
+
+The images that generated by the DCGAN model are provided here.
+
+
+
+
+
+Pixelated Character DCGAN Interpolation
+As you can see, the image interpolation by the GAN model is a bit different from the morphing process. While the procedural generation makes rapid moves, the GAN interpolation generates images smoothly.
+
+The comparison of these image generation techniques is given here.
+
+Press enter or click to view image in full size
+Press enter or click to view image in full size
+Real and Fake Images Comparison
+The real images are diverse but the fake images are enough interesting.
+
+Conclusion
+There are different methods to generate images. While the morphing process relies on the predefined set of rules, the generation by GANs applies the smooth transformation between the images. So, which method is the most suitable for your needs is on your own.
+
+Good luck!
+
+
+

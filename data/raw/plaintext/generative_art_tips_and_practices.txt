@@ -1,0 +1,132 @@
+Generative Art of Pixelated Characters: Tips and Practices
+Vladimir Zhuravlev
+Vladimir Zhuravlev
+
+Follow
+6 min read
+·
+Apr 19, 2023
+10
+
+
+1
+
+
+
+The videogame world is interesting and varied. One of its aspects is the creation of 2D pixelated game characters. There are two main ways to create character images: manual (with a brush) and generative (with an algorithm). The second one will be discussed here.
+
+There is an example of generated images. It is based on the dataset of 103 semi-transparent images, divided into 34 categories by the color pattern. Every image represents a pixelated 2D game character. It has the size of 64x64 with a meta-pixel’s (an image field of the same color) size of 4x4 or 8x8. With an algorithm written on Python, it is possible to generate literally hundreds and thousands of images using a relatively small image set.
+
+Press enter or click to view image in full size
+Pixel Art Characters
+The character images somewhat reminiscent of one pixelated videogame… Similar but different.
+Introduction
+Let’s take a look at an example of two character images: SmileCharacter and StrongCharacter.
+
+
+
+SmileCharacter and StrongCharacter Images
+The general approach to create the third image out of two images is using blending. It can be achieved by the OpenCV’s addWeighted function. The result is not good, however, because the structure of character images (the location of eyes, for example) is not the same.
+
+
+
+Image Blending
+Now, it’s time to mark up every image by its components.
+
+Image Labeling
+Every image can be marked up with some of nine regions: Head, Eye, Nose, Mouth, Helmet, Hair, Ear, Eyebrow, Eyeshade. Considered images have only five of them: Head, Eye, Nose, Mouth, Eyebrow. The most common image label tool is Computer Vision Annotation Tool. It allows to divide an image into the grid of meta-pixels and use polygons to label complex regions. Also it lets save a generated dataset in every widespread format (for instance, COCO Dataset Format).
+
+Press enter or click to view image in full size
+CVAT Image Labeling
+CVAT Image Labeling
+Image Filling
+As the result of image labeling, image region crops are created. Here you can see gaps in the Head region.
+
+Press enter or click to view image in full size
+Unlabeled Image Starter Pack
+Unlabeled Image Starter Pack
+These gaps can be filled with a brush in every common graphics editor (GIMP).
+
+Press enter or click to view image in full size
+Labeled Image Starter Pack
+Labeled Image Starter Pack
+Algorithm
+The image generation algorithm consists of four steps:
+
+Color Changing
+Upscaling
+Style Transfer
+Morphing
+Let’s give a detailed description of the algorithm steps.
+
+Color Changing
+The most common color model is RGB model. This model represents each color as the combination of three colors: red, green and blue. It is useful to output colors on the computer’s screen. However, it is not comfortable for people as the difference between colors is not well perceived by the human eye.
+
+There are color models that better convey the perceptual aspects of the human color vision: HLS, Lch, Lab, Luv, YUV and so on. In this algorithm, the Lch (HCL) color model is used as it allows you to change the color by sliding only one color channel.
+
+Get Vladimir Zhuravlev’s stories in your inbox
+Join Medium for free to get updates from this writer.
+
+Enter your email
+Subscribe
+
+Remember me for faster sign in
+
+The Lch color space describes the color as the combination of three attributes:
+
+Lightness — brightness relative to the brightness of a similarly illuminated white;
+Chroma — the perceived color appears to be more or less chromatic;
+Hue — the color area appears to be similar to one of the perceived colors: red, yellow, green, blue, or the combination of two of them.
+Lightness, Chroma, Hue
+Lightness, Chroma, Hue
+So, color changing is achieved by shifting along the Hue color channel. Conversion between RGB and Lch color spaces is implemented in the scikit-image package. Here are the pictures representing the color change of Smile and Strong characters.
+
+
+
+
+
+The character images with different colors
+Upscaling
+Every image in the dataset is scaled from 64x64 up to 256x256. To avoid pixelation, two detailing methods are used: smooth detail and random detail. The choice of the upscaling pattern depends on the image. Here you can see both upscaling patterns applied to the same image field.
+
+Press enter or click to view image in full size
+Smooth and Random Upscaling Patterns
+Smooth and Random Upscaling Patterns
+Each region of the image is upscaled separately. As a result, the scaled versions of the images look better than the original ones.
+
+
+
+SmileCharacter and StrongCharacter Upscaled Images
+Style Transfer
+Style transfer is the transfer of a color pattern between corresponding regions of an image pair. If one region is present in both images, then the resizing and averaging of an image area is applied. If one image doesn’t have a corresponding region of another image, then the color characteristics of the Head region are used. The colors are specified in the L*a*b color space. Here is the formula that is used to convey colors.
+
+Style Transfer
+Style Transfer
+An example of style transfer is shown here.
+
+
+
+SmileCharacter and StrongCharacter Swapped Color Styles
+Morphing
+Morphing is the process of transforming one image into another. In this algorithm, it is implemented by resizing the corresponding image areas, blending them and moving the resulting image area to the estimated position.
+
+There are few tips to keep in mind:
+
+Relative coordinates are superior to absolute ones. It allows you to keep the position of image areas relative to each other.
+If one region is present in only one image, it is moved along with other image regions. Color transfer is applied to change the colors of the image area along with other areas. Since the image area is present in only one image, it can only be seen during half of the morphing process.
+Using a dependency system is useful to avoid inaccuracies during image display. In this case, the Eyes depend on the Head, the Nose depends on the Eyes, the Mouth depends on the Nose and the Eyebrows also depend on the Eyes.
+Alignment is applied to keep the grid-like structure of an image the same. Here the alignment width: 4.
+The following images show the morphing process.
+
+
+
+
+
+SmileCharacter to StrongCharacter Morphing Process
+Conclusion
+You’ve just seen how this image generation algorithm works. Good luck!
+
+Videogames
+Pixel Art
+Game Art
+Generative Art

@@ -1,0 +1,180 @@
+Minetest Assistant: Mob Detection To Make Game Simple
+Vladimir Zhuravlev
+Vladimir Zhuravlev
+Vladimir Zhuravlev
+
+Follow
+Vladimir Zhuravlev
+2 followers
+
+Follow
+6 min read
+·
+Mar 22, 2024
+
+
+
+Everyone knows about the Minecraft video game. It allows people to create their own worlds by cubes, mining some resources from the ground and interacting with monsters called “mobs”.
+
+But not so many people knows about its free and undemanding clone named Minetest. Actually, its engine is just a collection of cubes without any resources like furniture, mobs, etc. Some modifications fix this problem by the implementation of all necessary addons. The most known mod that implements the basic Minecraft functionality is MineClone 2.
+
+Sometimes it is challenging to find any mobs. They can blend into the background like grass or be hidden in the night time. Fortunately, it can be solved by using Object Detection. One of the most popular models is Ultralytics YOLOv8, implemented in the PyTorch deep learning framework.
+
+Detection Model
+First of all, you need to mark up mobs by highlighting them with the “bounding box” and assigning them one of available classes. Computer Vision Annotation Tool can help with it. This project consists of 25 mob classes from all three game dimensions: The Overworld, The Nether and The End. The resulting dataset consists of 1,000 samples.
+
+Press enter or click to view image in full size
+
+CVAT Window
+Then, you need to train a model by providing the given dataset. There are a lot of YOLOv8 versions. The YOLOv8-Nano model, the smallest one, is chosen due to performance limitations. This model is pretrained on the COCO dataset. As the cheap GPU hosting, vast.ai can be used. The training GPU is NVIDIA GeForce RTX 4090 (24 GB). To start training, this command is used:
+
+yolo detect train data=minetest.yaml model=yolov8n.pt epochs=1000 batch=-1 patience=0 imgsz=640
+The label distribution is given here. Some classes have dozens of instances, while some of them have only few instances.
+
+Press enter or click to view image in full size
+
+Label Distribution
+The training process takes ~1 hour. The results of the metrics are given here.
+
+Press enter or click to view image in full size
+
+Training Result
+The inference GPU is NVIDIA GeForce GTX 1050 Ti (4 GB). To validate the model, you can use this command:
+
+yolo val model=yolov8n.pt data=minetest.yaml batch=32 plots=True device=0
+The main metric to evaluate object detection model is the mAP score. The result is here.
+
+Ultralytics YOLOv8.1.29 🚀 Python-3.10.12 torch-2.0.1+cu117 CUDA:0 (NVIDIA GeForce GTX 1050 Ti, 4036MiB)
+Model summary (fused): 168 layers, 3010523 parameters, 0 gradients, 8.1 GFLOPs
+                   all        200        329      0.891      0.782      0.858      0.658
+                   Bat        200          6       0.75          1      0.995       0.54
+                 Blaze        200          5      0.913          1      0.995      0.753
+           Cave Spider        200          8      0.954          1      0.995      0.802
+               Creeper        200         14          1      0.687      0.864      0.722
+           Enderdragon        200          5       0.99          1      0.995       0.35
+              Enderman        200         27      0.854      0.649      0.756      0.594
+                 Ghast        200          1          1          1      0.995      0.796
+                Hoglin        200          3      0.725      0.333      0.581      0.391
+                  Husk        200          6          1      0.453      0.654      0.386
+            Iron Golem        200          2      0.871          1      0.995      0.951
+         Little Piglin        200          4       0.72       0.75      0.721      0.643
+         LIttle Zombie        200         25      0.921      0.464        0.7      0.474
+            Magma Cube        200         12          1      0.479      0.766      0.598
+                Piglin        200          4      0.803        0.5       0.58      0.522
+          Piglin Brute        200         15       0.92          1       0.97      0.786
+              Pillager        200         18      0.767      0.611      0.718       0.54
+            Silverfish        200          1      0.776          1      0.995      0.796
+              Skeleton        200         38      0.933      0.947      0.967      0.761
+                 Slime        200         11       0.94      0.818      0.865      0.772
+                Spider        200         47      0.962      0.745      0.822      0.701
+               Strider        200          6      0.923      0.667      0.841      0.545
+              Villager        200         10      0.941        0.9      0.926      0.857
+              Wanderer        200          1      0.745          1      0.995      0.697
+                Zombie        200         38      0.933      0.763       0.85      0.685
+       Zombie Villager        200         22       0.93      0.773      0.903      0.781
+Speed: 1.5ms preprocess, 5.8ms inference, 0.0ms loss, 0.8ms postprocess per image
+Results saved to runs/detect/val
+Press enter or click to view image in full size
+
+F1-Confidence Curve (PyTorch)
+Some classes (Iron Golem, Villagers) have performed well, while another ones (Enderdragon, Husk) are not good enough.
+
+Get Vladimir Zhuravlev’s stories in your inbox
+Join Medium for free to get updates from this writer.
+
+Enter your email
+Subscribe
+
+Remember me for faster sign in
+
+To see some class intersections, it is possible to use the confusion matrix.
+
+Press enter or click to view image in full size
+
+Confusion Matrix (PyTorch)
+The original model format is the PyTorch *.pt format. It can be accelerated by using the NVIDIA’s TensorRT technology with the *.engine format. To make conversion, run this command:
+
+yolo export model=yolov8n.pt format=engine
+To make comparison between these two formats, it is possible to run the validation:
+
+yolo val model=yolov8n.engine data=minetest.yaml batch=32 plots=True device=0
+The result of the validation is here.
+
+Ultralytics YOLOv8.1.29 🚀 Python-3.10.12 torch-2.0.1+cu117 CUDA:0 (NVIDIA GeForce GTX 1050 Ti, 4036MiB)
+                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95):
+                   all        200        329      0.878        0.8      0.855      0.654
+                   Bat        200          6      0.641          1      0.995       0.53
+                 Blaze        200          5      0.931          1      0.995      0.737
+           Cave Spider        200          8      0.944          1      0.995      0.811
+               Creeper        200         14          1      0.694      0.822      0.682
+           Enderdragon        200          5      0.982          1      0.995      0.345
+              Enderman        200         27      0.821      0.667      0.763      0.589
+                 Ghast        200          1          1          1      0.995      0.895
+                Hoglin        200          3        0.9      0.667      0.682      0.415
+                  Husk        200          6      0.692      0.333       0.57      0.366
+            Iron Golem        200          2          1          1      0.995      0.958
+         Little Piglin        200          4      0.667       0.75      0.718      0.611
+         LIttle Zombie        200         25      0.931      0.542       0.72      0.487
+            Magma Cube        200         12          1      0.519      0.706       0.56
+                Piglin        200          4      0.761        0.5       0.58      0.522
+          Piglin Brute        200         15      0.916          1      0.933      0.766
+              Pillager        200         18      0.761      0.611      0.687      0.519
+            Silverfish        200          1      0.748          1      0.995      0.796
+              Skeleton        200         38      0.878      0.947      0.953      0.707
+                 Slime        200         11      0.942      0.818      0.871      0.775
+                Spider        200         47      0.965      0.723      0.804       0.68
+               Strider        200          6          1      0.735      0.922      0.589
+              Villager        200         10      0.934        0.9      0.922      0.851
+              Wanderer        200          1      0.685          1      0.995      0.697
+                Zombie        200         38      0.911      0.763       0.85      0.686
+       Zombie Villager        200         22      0.938      0.818      0.909      0.785
+Speed: 0.6ms preprocess, 7.4ms inference, 0.0ms loss, 1.4ms postprocess per image
+Results saved to runs/detect/val2
+Press enter or click to view image in full size
+
+F1-Confidence Curve (TensorRT)
+In general, the mAP scores decrease by just 0.3–0.4%.
+
+The confusion matrix is given here.
+
+Press enter or click to view image in full size
+
+Confusion Matrix (TensorRT)
+The inference time comparison is given on the picture.
+
+
+Inference Comparison
+The TensorRT inference time is slightly higher than the PyTorch one. The reason is that the number of samples is too small to make such a comparison. This can be made by using the real application.
+
+In-Game Overlay Window
+The YOLOv8 framework allows people to detect objects on different images and videos. But to use the model in the game, the program should be built.
+
+This application is a Python in-game overlay window. It consists of three threads: Key Capture, Object Detection and UI Rendering.
+
+Is is based on the PyQt5 GUI framework. To get screenshots from the screen, the mss library is used. To capture key clicks, the pynput package is used.
+
+Press enter or click to view image in full size
+
+Minetest Assistant Scheme
+The overlay window consists of three UI elements: the bounding boxes with the class-score information, thetext description of the found mobs and the number of frames per second. They can be turned off by the buttons defined in the settings.
+
+Press enter or click to view image in full size
+
+Overlay Window
+The complete walk-through video is available on YouTube. You can see it here.
+
+
+To compare PyTorch and TensorRT formats, the game is run for 5 minutes. The time ticks of every frame capture and detection are logged. The FPS comparison is given here.
+
+
+FPS Comparison
+You can see that the TensorRT FPS score is 3–4 frames higher than the PyTorch one.
+
+Conslusion
+This article describes the process of the in-game overlay creation. It consists of the object detection model training and validation steps, and the overlay window implementation. Hope this information will be useful to you. Good luck!
+
+Minetest
+Mineclone 2
+Ultralytics
+Yolov8
+Object Detection
