@@ -1,6 +1,0 @@
-chunking:
-  chunk_size: 512
-  chunk_overlap: 80
-
-retrieval:
-  top_k: 3

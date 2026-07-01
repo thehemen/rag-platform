@@ -39,3 +39,19 @@ class HealthResponse(BaseModel):
     """Health check response."""
 
     status: str = "ok"
+
+
+class RetrieveRequest(BaseModel):
+    """Request schema for retrieval-only search."""
+
+    question: str = Field(default="")
+    top_k: int = Field(default=3, ge=1, le=20)
+
+
+class RetrieveResponse(BaseModel):
+    """Response schema for retrieval-only search."""
+
+    question: str = Field(default="")
+    sources: list[SourceChunk] = Field(default_factory=list)
+    collection_name: str = Field(default="")
+    embedding_model: str = Field(default="")

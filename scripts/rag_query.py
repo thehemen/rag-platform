@@ -11,7 +11,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 
-from src.llm import OpenRouterClient
+from src.llm import GroqLLMClient
 from src.rag import RAGQueryConfig, RAGQueryEngine, RAGQueryInput, RAGRetriever
 
 
@@ -40,15 +40,19 @@ def main() -> None:
         ),
     )
 
-    llm_client = OpenRouterClient(
-        api_key=os.getenv("OPENROUTER_API_KEY", ""),
-        base_url=os.getenv(
-            "OPENROUTER_BASE_URL",
-            "https://openrouter.ai/api/v1",
-        ),
-        model=os.getenv("OPENROUTER_MODEL", ""),
-        temperature=float(os.getenv("LLM_TEMPERATURE", "0.2")),
-        max_tokens=int(os.getenv("LLM_MAX_TOKENS", "800")),
+    llm_client = GroqLLMClient(
+        api_key=os.getenv("GROQ_API_KEY") or None,
+        model=os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b"),
+        fallback_models=_parse_models(os.getenv("GROQ_FALLBACK_MODELS", "")),
+        temperature=float(os.getenv("LLM_TEMPERATURE", "0.6")),
+        max_tokens=int(os.getenv("LLM_MAX_TOKENS", "4096")),
+        top_p=float(os.getenv("LLM_TOP_P", "0.95")),
+        reasoning_effort=os.getenv("LLM_REASONING_EFFORT", "default"),
+        stream=os.getenv("LLM_STREAM", "false").lower()
+        in {"1", "true", "yes", "y"},
+        max_retries=int(os.getenv("LLM_MAX_RETRIES", "2")),
+        retry_sleep_seconds=float(os.getenv("LLM_RETRY_SLEEP_SECONDS", "2.0")),
+        timeout=float(os.getenv("LLM_TIMEOUT", "180")),
     )
 
     query_engine = RAGQueryEngine(
@@ -61,8 +65,8 @@ def main() -> None:
             question=question,
             config=RAGQueryConfig(
                 top_k=int(os.getenv("TOP_K", "3")),
-                temperature=float(os.getenv("LLM_TEMPERATURE", "0.2")),
-                max_tokens=int(os.getenv("LLM_MAX_TOKENS", "800")),
+                temperature=float(os.getenv("LLM_TEMPERATURE", "0.6")),
+                max_tokens=int(os.getenv("LLM_MAX_TOKENS", "4096")),
             ),
         )
     )
@@ -75,6 +79,14 @@ def _read_question() -> str:
         return " ".join(sys.argv[1:])
 
     return input("Question: ").strip()
+
+
+def _parse_models(value: str) -> list[str]:
+    return [
+        item.strip()
+        for item in value.split(",")
+        if item.strip()
+    ]
 
 
 def _print_result(result) -> None:

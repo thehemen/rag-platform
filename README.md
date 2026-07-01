@@ -1,4 +1,4 @@
-# RAG OpenRouter Platform
+# RAG Platform
 
 Base skeleton for a RAG system.
 
@@ -11,7 +11,7 @@ Base skeleton for a RAG system.
 - FastAPI
 - Gradio
 - DeepEval
-- OpenAI-compatible OpenRouter API
+- OpenAI-compatible Grok API
 
 ## Status
 

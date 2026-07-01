@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from src.llm import OpenRouterClient, PromptTemplates
+from src.llm import GroqLLMClient, PromptTemplates
 from src.rag.retriever import RAGRetriever, RetrievedChunk
 from src.rag.response_builder import RAGAnswer, RAGResponseBuilder
 from src.rag.source_formatter import SourceFormatter
@@ -32,7 +32,7 @@ class RAGQueryEngine:
     def __init__(
         self,
         retriever: RAGRetriever,
-        llm_client: OpenRouterClient,
+        llm_client: GroqLLMClient,
         response_builder: RAGResponseBuilder | None = None,
         source_formatter: SourceFormatter | None = None,
     ) -> None:

@@ -22,8 +22,8 @@ class GradioRAGApp:
         self.settings = settings or GradioSettings()
 
     def build(self) -> gr.Blocks:
-        with gr.Blocks(title="RAG OpenRouter Demo") as demo:
-            gr.Markdown("# RAG OpenRouter Demo")
+        with gr.Blocks(title="RAG Grok Demo") as demo:
+            gr.Markdown("# RAG Grok Demo")
             gr.Markdown(
                 "Ask a question about the indexed Markdown and text documents."
             )

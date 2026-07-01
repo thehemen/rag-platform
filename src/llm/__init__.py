@@ -1,15 +1,21 @@
-from src.llm.openrouter_client import (
+from src.llm.groq_client import (
     ChatMessage,
-    OpenRouterClient,
-    OpenRouterResponse,
+    GroqClientError,
+    GroqGenerationError,
+    GroqLLMClient,
+    GroqRateLimitError,
+    GroqResponse,
 )
 from src.llm.prompts import PromptTemplates, RAGPrompt
 
 
 __all__ = [
     "ChatMessage",
-    "OpenRouterClient",
-    "OpenRouterResponse",
+    "GroqClientError",
+    "GroqGenerationError",
+    "GroqLLMClient",
+    "GroqRateLimitError",
+    "GroqResponse",
     "PromptTemplates",
     "RAGPrompt",
 ]

@@ -1,8 +1,0 @@
-llm:
-  provider: openrouter
-  base_url: https://openrouter.ai/api/v1
-  model: ""
-
-embeddings:
-  provider: sentence_transformers
-  model: BAAI/bge-small-en-v1.5

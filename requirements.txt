@@ -11,7 +11,7 @@ llama-index-llms-openai
 
 sentence-transformers
 qdrant-client
-openai
+groq
 
 markdown
 gradio
