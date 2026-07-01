@@ -1,6 +1,6 @@
 # RAG OpenRouter Platform
 
-Base skeleton for a small RAG system.
+Base skeleton for a RAG system.
 
 ## Stack
 
