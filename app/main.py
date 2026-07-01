@@ -1,14 +1,20 @@
+from __future__ import annotations
+
 from fastapi import FastAPI
 
 from app.api_routes import router
 
 
-class RAGApplication:
-    """FastAPI application container."""
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title="RAG OpenRouter Project",
+        description="Small RAG API using Qdrant, SentenceTransformers, and OpenRouter.",
+        version="0.1.0",
+    )
 
-    pass
+    app.include_router(router)
+
+    return app
 
 
-app = FastAPI(title="RAG OpenRouter Project")
-
-app.include_router(router)
+app = create_app()
