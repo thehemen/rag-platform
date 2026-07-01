@@ -4,6 +4,7 @@ __pycache__/
 
 data/processed/
 vector_db/
+qdrant_storage/
 .qdrant/
 
 .cache/
