@@ -180,7 +180,7 @@ class GroqLLMClient:
                     text = self._collect_stream_text(completion)
 
                     if self.strip_reasoning:
-                        text = LLMTextUtils.strip_reasoning(text)
+                        text = LLMTextUtils.clean_text(text)
 
                     return GroqResponse(
                         text=text,
@@ -191,7 +191,7 @@ class GroqLLMClient:
                 text = completion.choices[0].message.content or ""
 
                 if self.strip_reasoning:
-                    text = LLMTextUtils.strip_reasoning(text)
+                    text = LLMTextUtils.clean_text(text)
 
                 return GroqResponse(
                     text=text,

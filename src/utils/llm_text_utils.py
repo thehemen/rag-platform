@@ -7,10 +7,24 @@ import re
 class LLMTextUtils:
     """Helpers for cleaning LLM outputs."""
 
-    THINK_PATTERN = re.compile(
-        r"<think>.*?</think>",
-        flags=re.DOTALL | re.IGNORECASE,
-    )
+    THINK_BLOCK_PATTERNS = [
+        re.compile(
+            r"<think>.*?</think>",
+            flags=re.DOTALL | re.IGNORECASE,
+        ),
+        re.compile(
+            r"<thinking>.*?</thinking>",
+            flags=re.DOTALL | re.IGNORECASE,
+        ),
+        re.compile(
+            r"\[think\].*?\[/think\]",
+            flags=re.DOTALL | re.IGNORECASE,
+        ),
+        re.compile(
+            r"\[thinking\].*?\[/thinking\]",
+            flags=re.DOTALL | re.IGNORECASE,
+        ),
+    ]
 
     CODE_BLOCK_PATTERN = re.compile(
         r"```(?:json)?\s*(.*?)```",
@@ -18,20 +32,33 @@ class LLMTextUtils:
     )
 
     @classmethod
-    def strip_reasoning(cls, text: str) -> str:
-        """Removes visible reasoning blocks from model output."""
+    def clean_text(cls, text: str) -> str:
+        """Cleans model output for normal application use."""
+
+        text = cls.strip_think_blocks(text)
+        text = cls._normalize_spacing(text)
+
+        return text
+
+    @classmethod
+    def strip_think_blocks(cls, text: str) -> str:
+        """Removes visible thinking blocks from model output."""
 
         if not text:
             return ""
 
-        text = cls.THINK_PATTERN.sub("", text)
-        return text.strip()
+        cleaned = text
+
+        for pattern in cls.THINK_BLOCK_PATTERNS:
+            cleaned = pattern.sub("", cleaned)
+
+        return cleaned.strip()
 
     @classmethod
     def extract_json_text(cls, text: str) -> str:
         """Extracts a valid JSON object or array from a model response."""
 
-        cleaned = cls.strip_reasoning(text)
+        cleaned = cls.clean_text(text)
         cleaned = cls._strip_code_block(cleaned)
 
         if cls._is_valid_json(cleaned):
@@ -43,6 +70,24 @@ class LLMTextUtils:
             return json_candidate
 
         return cleaned
+
+    @classmethod
+    def _normalize_spacing(cls, text: str) -> str:
+        lines = [line.rstrip() for line in text.splitlines()]
+
+        normalized_lines: list[str] = []
+        previous_empty = False
+
+        for line in lines:
+            is_empty = not line.strip()
+
+            if is_empty and previous_empty:
+                continue
+
+            normalized_lines.append(line)
+            previous_empty = is_empty
+
+        return "\n".join(normalized_lines).strip()
 
     @classmethod
     def _strip_code_block(cls, text: str) -> str:

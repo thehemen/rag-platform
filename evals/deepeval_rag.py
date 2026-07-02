@@ -16,6 +16,7 @@ from evals.safe_deepeval_metrics import (
     SafeFaithfulnessMetric,
 )
 from src.llm import GroqClientError, GroqLLMClient
+from src.utils import LLMTextUtils
 
 
 @dataclass(frozen=True)
@@ -189,11 +190,21 @@ class DeepEvalRAGRunner:
             "Answer:"
         )
 
-        return self.generator_client.generate_text(
+        response = self.generator_client.generate_text(
             prompt=prompt,
-            system_prompt="You are a concise RAG assistant.",
+            system_prompt=(
+                "You are a concise RAG assistant. "
+                "Do not include thinking, reasoning traces, <think> blocks, or hidden analysis. "
+                "Return only the final answer."
+            ),
             temperature=self.temperature,
             max_tokens=self.max_tokens,
+        )
+
+        return type(response)(
+            text=LLMTextUtils.clean_text(response.text),
+            model=response.model,
+            usage=response.usage,
         )
 
     def _evaluate_metrics(
